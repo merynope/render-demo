@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from flask import Flask, request, jsonify, render_template
 import easyocr
 import cv2
@@ -6,10 +5,9 @@ from werkzeug.utils import secure_filename
 import os
 from roboflow import Roboflow
 import re
-import dill
-import requests
 import numpy as np
 from inference_sdk import InferenceHTTPClient
+from datetime import datetime
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -97,12 +95,29 @@ def process_image():
     file.save(file_path)
 
     # Process the uploaded image using the OCR model
-    dates = ocr_model(file_path)
-    print(dates)
+    extracted_data = ocr_model(file_path)
 
-    # Return results to render in the HTML page
-    return render_template('index.html', dates=dates)
+    # Prepare structured data for rendering in a table
+    table_data = []
+    for i, date_info in enumerate(extracted_data):
+        # Example dynamic timestamp
+        timestamp = datetime.now().isoformat()
+        expired = "No" if int(date_info["year"]) > datetime.now().year else "Yes"
+        table_data.append({
+            "sl_no": i + 1,
+            "timestamp": timestamp,
+            "brand": f"Brand {i + 1}",  # Placeholder, extract real brand if available
+            "expiry_date": f"{date_info['day']}/{date_info['month']}/{date_info['year']}",
+            "expired": expired,
+            "expected_life_span_days": 1105  # Placeholder, calculate dynamically if needed
+        })
+
+    # Render the template with the table data
+    return render_template('index.html', table_data=table_data)
 
 # Run the app
 if __name__ == '__main__':
+    # Ensure the uploads directory exists
+    if not os.path.exists('uploads'):
+        os.makedirs('uploads')
     app.run(debug=True)
