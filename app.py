@@ -6,8 +6,8 @@ import os
 from roboflow import Roboflow
 import re
 import numpy as np
-from inference_sdk import InferenceHTTPClient
 from datetime import datetime
+from inference_sdk import InferenceHTTPClient
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -18,7 +18,7 @@ CLIENT = InferenceHTTPClient(
     api_key="sATFGANLTgmF0sjtac0E"
 )
 
-# Define the OCR model function (this assumes you already have a saved model)
+# Define the OCR model function
 def ocr_model(image_path):
     # Call the Roboflow inference
     result = CLIENT.infer(image_path, model_id="expiredatedetection/4")
@@ -40,9 +40,9 @@ def ocr_model(image_path):
         box_height = prediction["height"]
 
         top_left_x = int(x_center - box_width / 2)
-        top_left_y = int(y_center - box_height / 2)
+        top_left_y = int(y_center - box_width / 2)
         bottom_right_x = int(x_center + box_width / 2)
-        bottom_right_y = int(y_center + box_height / 2)
+        bottom_right_y = int(y_center + box_width / 2)
 
         # Read and preprocess the cropped region
         image = cv2.imread(image_path)
@@ -99,17 +99,25 @@ def process_image():
 
     # Prepare structured data for rendering in a table
     table_data = []
+    current_date = datetime.now()
     for i, date_info in enumerate(extracted_data):
-        # Example dynamic timestamp
-        timestamp = datetime.now().isoformat()
-        expired = "No" if int(date_info["year"]) > datetime.now().year else "Yes"
+        expiry_date = datetime(
+            year=int(date_info["year"]),
+            month=int(date_info["month"]),
+            day=int(date_info["day"])
+        )
+
+        # Calculate expected life span
+        life_span_days = (expiry_date - current_date).days
+        expired = "No" if life_span_days > 0 else "Yes"
+
         table_data.append({
             "sl_no": i + 1,
-            "timestamp": timestamp,
+            "timestamp": current_date.isoformat(),
             "brand": f"Brand {i + 1}",  # Placeholder, extract real brand if available
-            "expiry_date": f"{date_info['day']}/{date_info['month']}/{date_info['year']}",
+            "expiry_date": expiry_date.strftime("%d/%m/%Y"),
             "expired": expired,
-            "expected_life_span_days": 1105  # Placeholder, calculate dynamically if needed
+            "expected_life_span_days": life_span_days if life_span_days > 0 else 0  # Show 0 for expired items
         })
 
     # Render the template with the table data
