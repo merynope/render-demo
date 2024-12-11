@@ -28,7 +28,7 @@ This project is a Flask-based web application designed for real-time packaging a
 - **PIL** (for image handling)
 - **Ultralytics** (for YOLOv8)
 
-### Install Dependencies
+### Steps to run the file
 
 1. Clone the repository:
    ```bash
@@ -44,6 +44,7 @@ This project is a Flask-based web application designed for real-time packaging a
 4. Install additional dependencies for NVIDIA Jetson TX1:
    ```bash
    sudo apt-get install libopencv-dev python-opencv
-
-
+5. run the flask app
+   ```bash
+   python redirectapp.py
 
