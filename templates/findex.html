@@ -85,7 +85,7 @@
                 <th>Timestamp</th>
                 <th>Produce</th>
                 <th>Freshness</th>
-                <th>Expected Lifespan (Days)</th>
+                <th>Count</th>
             </tr>
         </thead>
         <tbody>
@@ -96,7 +96,7 @@
                 <td>{{ result.timestamp }}</td>
                 <td>{{ result.produce }}</td>
                 <td>{{ result.freshness }}</td>
-                <td>{{ result.lifespan }}</td>
+                <td>{{ counts[result.produce] }}</td>
             </tr>
             {% endfor %}
         </tbody>
