@@ -5,6 +5,7 @@ from ultralytics import YOLO
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from PIL import Image
 import torch
+from collections import Counter
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -22,6 +23,13 @@ camera = cv2.VideoCapture(0)
 # Dummy data to store results
 results = []
 analysis_results = []
+
+#loading freshness model
+def load_freshness_model():
+    model = YOLO("best.pt")  # Replace with your YOLO model path for freshness analysis
+    return model
+
+freshness_model = load_freshness_model()
 
 # Helper functions for both apps (app.py and fruitapp.py)
 
@@ -73,25 +81,28 @@ def detect_and_analyze(frame):
 
 # Fruit freshness analysis function (from fruitapp.py)
 def analyze_frame(frame):
-    results = yolo_model(frame)
-    detections = results[0].boxes
+    result = freshness_model(frame, conf=0.3, imgsz=640)
+    detections = result[0].boxes
     output = []
-    for i in range(len(detections)):
-        box = detections[i]
-        produce = results[0].names[box.cls[0].item()]
-        freshness = box.conf[0].item()
-        timestamp = datetime.now().isoformat()
+    counts = Counter()
 
-        lifespan_mapping = {'broccoli': 5, 'onion': 12, 'papaya': 2}
-        lifespan = lifespan_mapping.get(produce, 'N/A')
+    for box in detections.data.tolist():
+        x1, y1, x2, y2, confidence, class_id = box
+        produce = freshness_model.names[int(class_id)]
+        freshness = "Fresh" if "fresh" in produce.lower() else "Rotten"
+        counts[produce] += 1
 
         output.append({
-            'timestamp': timestamp,
-            'produce': produce,
-            'freshness': round(freshness * 10),
-            'lifespan': lifespan
+            "timestamp": datetime.now().isoformat(),
+            "produce": produce,
+            "freshness": freshness,
+            "confidence": round(confidence * 100, 2),
+            "bounding_box": {
+                "x1": int(x1), "y1": int(y1), "x2": int(x2), "y2": int(y2)
+            }
         })
-    return output
+
+    return output, counts
 
 # Video feed generator (for both apps)
 def generate_frames():
@@ -131,7 +142,10 @@ def index_page():
 
 @app.route('/findex')
 def findex_page():
-    return render_template('findex.html')
+    counts = Counter()
+    for result in analysis_results:
+        counts[result['produce']] += 1
+    return render_template('findex.html', results=analysis_results, counts=counts)
 
 @app.route('/video_feed')
 def video_feed():
