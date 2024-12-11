@@ -32,6 +32,18 @@ This project is a Flask-based web application designed for real-time packaging a
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo-name.git
-   cd your-repo-name
+   git clone https://github.com/merynope/render-demo.git
+2. Create a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Linux/macOS
+   venv\Scripts\activate  # On Windows
+3. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+4. Install additional dependencies for NVIDIA Jetson TX1:
+   ```bash
+   sudo apt-get install libopencv-dev python-opencv
+
+
 
